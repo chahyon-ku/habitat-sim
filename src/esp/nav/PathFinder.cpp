@@ -607,6 +607,29 @@ bool PathFinder::Impl::build(const NavMeshSettings& bs,
     ESP_ERROR() << "Could not rasterize triangles.";
     return false;
   }
+  if (ws.solid->width == 960 && ws.solid->height == 1330) {
+    // printf("size: %d, %d\n", ws.solid->width, ws.solid->height);
+    for (int i = 850; i < 870; ++i) {
+      for (int j = 195; j < 275; ++j) {
+        rcSpan* span = ws.solid->spans[i * ws.solid->width + j];
+        while (span) {
+          span->smin = 1;
+          span->smax = 2;
+          span = span->next;
+        }
+      }
+    }
+    for (int i = 970; i < 1047; ++i) {
+      for (int j = 717; j < 720; ++j) {
+        rcSpan* span = ws.solid->spans[i * ws.solid->width + j];
+        while (span) {
+          span->smin = 1;
+          span->smax = 2;
+          span = span->next;
+        }
+      }
+    }
+  }
 
   //
   // Step 3. Filter walkables surfaces.
@@ -853,7 +876,8 @@ bool PathFinder::Impl::initNavQuery() {
   islandMeshData_.clear();
 
   navQuery_.reset(dtAllocNavMeshQuery());
-  dtStatus status = navQuery_->init(navMesh_.get(), 2048);
+  // dtStatus status = navQuery_->init(navMesh_.get(), 2048);
+  dtStatus status = navQuery_->init(navMesh_.get(), 16384);
   if (dtStatusFailed(status)) {
     ESP_ERROR() << "Could not init Detour navmesh query";
     return false;
@@ -1307,7 +1331,8 @@ PathFinder::Impl::findPathInternal(const vec3f& start,
     return Cr::Containers::NullOpt;
   }
 
-  static const int MAX_POLYS = 256;
+  // static const int MAX_POLYS = 256;
+  static const int MAX_POLYS = 65536;
   dtPolyRef polys[MAX_POLYS];
 
   int numPolys = 0;
@@ -1440,7 +1465,8 @@ bool PathFinder::Impl::findPath(MultiGoalShortestPath& path) {
 
 template <typename T>
 T PathFinder::Impl::tryStep(const T& start, const T& end, bool allowSliding) {
-  static const int MAX_POLYS = 256;
+  // static const int MAX_POLYS = 256;
+  static const int MAX_POLYS = 65536;
   dtPolyRef polys[MAX_POLYS];
 
   dtStatus startStatus = 0, endStatus = 0;
@@ -1452,10 +1478,12 @@ T PathFinder::Impl::tryStep(const T& start, const T& end, bool allowSliding) {
       projectToPoly(end, navQuery_.get(), filter_.get());
 
   if (dtStatusFailed(startStatus) || dtStatusFailed(endStatus)) {
+    // printf("[ku] projectToPoly failed for start or end\n");
     return start;
   }
 
   if (not islandSystem_->hasConnection(startRef, endRef)) {
+    // printf("[ku] no connection between start and end\n");
     return start;
   }
 
@@ -1467,6 +1495,7 @@ T PathFinder::Impl::tryStep(const T& start, const T& end, bool allowSliding) {
   // If there isn't any possible path between start and end, just return
   // start, that is cleanest
   if (numPolys == 0) {
+    // printf("[ku] moveAlongSurface found no path\n");
     return start;
   }
 

@@ -441,8 +441,6 @@ if __name__ == "__main__":
     assert StrictVersion(
         "{}.{}".format(sys.version_info[0], sys.version_info[1])
     ) >= StrictVersion("3.9"), "Must use python 3.9 or newer"
-    with open("./requirements.txt", "r") as f:
-        requirements = [l.strip() for l in f.readlines() if len(l.strip()) > 0]
 
     builtins.__HSIM_SETUP__ = True
     import habitat_sim
@@ -455,7 +453,19 @@ if __name__ == "__main__":
         long_description="",
         packages=find_packages(where="src_python"),
         package_dir={"": "src_python"},
-        install_requires=requirements,
+        install_requires=[
+            "attrs>=19.1.0",
+            "gitpython",
+            "imageio",
+            "imageio-ffmpeg",
+            "matplotlib",
+            "numba",
+            "numpy<2",
+            "numpy-quaternion",
+            "pillow",
+            "scipy>=1.3.0",
+            "tqdm",
+        ],
         tests_require=["hypothesis", "pytest-benchmark", "pytest"],
         python_requires=">=3.9",
         # add extension module
